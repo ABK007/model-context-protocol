@@ -287,7 +287,6 @@ The video demonstrates an example where a simple Python-based MCP agent is built
   - **Report Writer Agent:** Synthesizes the verified information into a structured, formatted report.
 - **Orchestration:** An orchestrator agent manages the overall plan, organizing the sequence of actions and ensuring that each sub-agent performs its role in the agent loop.
 
-
 ---
 
 ## 3. Questions and Answers from the Video
@@ -299,54 +298,45 @@ The video covers several important questions regarding agents and MCP. Below are
 - **Answer:**  
   MCP standardizes the way context is integrated into AI systems. As models improve and agents become more capable of handling dynamic inputs, MCP enables them to efficiently access external tools, data, and memory. This reduces the need to hardcode every capability into an agent and allows for on-the-fly expansion of functionalities.
 
-
 ### Q2: What does it mean for an agent to be “augmented”?
 
 - **Answer:**  
   An augmented agent is one that combines a traditional language model with external capabilities such as retrieval systems, tool invocation, and persistent memory. This augmentation allows the agent to maintain context across interactions and execute complex tasks through a loop of planning, tool usage, and result synthesis.
-
 
 ### Q3: How do agents discover new capabilities after deployment?
 
 - **Answer:**  
   With MCP, agents do not need to have every required functionality built into them at initialization. Instead, they can dynamically discover and invoke new tools or services via MCP servers as needed. This flexibility means that agents can evolve based on the available context and user needs.
 
-
 ### Q4: What is the separation of concerns between the agent and the server-provided capabilities?
 
 - **Answer:**  
   The design separates the **core agent loop**—which handles task planning, execution, and memory—from the external capabilities provided by MCP servers (e.g., tools, resources, prompts). Agents focus on orchestrating tasks and interactions, while servers handle the logistics of exposing and managing external systems.
-
 
 ### Q5: Can MCP be used with proprietary data?
 
 - **Answer:**  
   Yes. The openness of MCP means that organizations can deploy MCP servers within their own secure environments (such as a VPC) to interact with proprietary data, allowing agents to operate over private datasets and internal systems.
 
-
 ### Q6: How do resources and prompts factor into the agent loop?
 
 - **Answer:**  
   While tools are primarily invoked by the model within the agent loop, resources and prompts are generally more user-controlled. In agent scenarios, resources and prompts often appear as supplemental context—such as UI elements in a chat interface that provide step-by-step plans or summaries—rather than as direct components of the automated agent loop.
-
 
 ### Q7: What about evaluations and versioning of MCP components?
 
 - **Answer:**  
   The discussion suggests that current evaluation workflows (such as assessing tool calls) remain largely similar. MCP may even serve as a standard layer within evaluation systems in the future. Versioning is typically managed through standard package versioning (using tools like npm or pip), ensuring a clear upgrade path without breaking client-server interactions.
 
-
 ### Q8: Is there a limit to how many tools or servers an LM can work with?
 
 - **Answer:**  
   In practice, modern language models (such as Claude) can handle up to a couple hundred tool calls. For scenarios involving thousands of tools, the approach would involve hierarchical grouping or dedicated search tools to manage and surface the relevant tools without overwhelming the context.
 
-
 ### Q9: How are distribution and extension systems handled in MCP?
 
 - **Answer:**  
   Distribution and extensions are managed through standardized registries and auto-generation tools. For example, popular open-source projects (like Klein) incorporate MCP autogeneration features that enable rapid creation of new MCP servers, streamlining the process of integrating new capabilities.
-
 
 ### Q10: What is the separation of logic (e.g., retry logic, authentication) between client and server?
 
@@ -383,5 +373,255 @@ The video covers several important questions regarding agents and MCP. Below are
 
 - **Federation:**  
   The process by which MCP aggregates various tools, resources, and prompts from multiple servers into a unified protocol, enabling agents to access a broad range of capabilities without individual integration efforts.
+
+---
+
+# Building Effective Agents with MCP
+
+## 1. Overview
+
+The Model Context Protocol (MCP) is designed to standardize how AI applications receive and utilize context from external systems. In the evolving landscape of intelligent systems, MCP plays a critical role as the underlying layer for building agents—augmented language models (LLMs) that operate in continuous loops. These agents leverage MCP to seamlessly integrate external tools, data, and services while dynamically adapting to new requirements after deployment.
+
+Effective agents built with MCP have the following characteristics:
+
+- **Dynamic Capability Expansion:** They can discover and invoke new tools or services on the fly.
+- **Federated Context Management:** MCP standardizes the way context (data, prompts, tool calls) is brought into the agent loop.
+- **Composable Architecture:** Agents and servers can be both clients and providers, enabling complex chains of interaction and orchestration.
+
+---
+
+## 2. Protocol Capabilities for Agents
+
+### 2.1. Sampling
+
+One of the most underutilized but powerful capabilities in MCP is **sampling**. Sampling enables an MCP server to request completions or inference calls from the client’s LLM. Instead of the server having to implement its own interaction with an LLM, the protocol allows:
+
+- **Federated Inference:** The server can send system or task prompts (with parameters such as model preferences, temperature, maximum tokens, etc.) to the client.
+- **Client-Controlled Execution:** The client, which may host or control the LLM, processes these requests and can apply its own privacy, cost, or rate-limit controls.
+- **Intelligent Routing:** The server can tailor requests based on desired model characteristics (e.g., small vs. large model) without burdening the client with extra logic.
+
+This approach shifts part of the intelligence to the client while ensuring that the server can still influence the output through controlled parameters.
+
+### 2.2. Composability
+
+MCP emphasizes a composable design:
+
+- **Logical Separation:** The client and server roles are logically separated, yet the same application can act as both an MCP client and server. This flexibility allows one node to serve as an agent while also invoking other services.
+- **Chaining of Interactions:** Agents can “chain” requests by having one agent (or server) invoke another. For instance, a research agent might call a file system server, then a web search server, and finally aggregate the responses to provide a unified answer.
+- **Hierarchical Architectures:** Complex agent systems can be built by layering multiple MCP servers. Each layer specializes in a subset of tasks, such as data retrieval, analysis, or decision making, while the orchestration across layers is managed through standardized protocol calls.
+
+### 2.3. Additional Protocol Features
+
+The video also touches on other protocol-related capabilities:
+
+- **Tool Annotations:** Extra metadata (e.g., indicating read versus write actions) can be attached to tool calls to help clients determine the intended behavior.
+- **Rate Limiting and Control Flow:** While the LLM runs at the base layer, the application layer controls overall flow and rate limits. This allows for fine-grained control over how many requests are made and how data is aggregated.
+- **Observability and Debuggability:** Although the MCP protocol itself does not enforce strict observability standards, best practices recommend that servers expose metadata (e.g., logging, debugging information) to ensure that the interactions can be monitored and troubleshot effectively.
+- **Governance and Security:** Decisions on what a client may access are generally controlled by the server builder. MCP includes a default approach for authentication and authorization to safeguard interactions, ensuring that only approved requests proceed.
+
+_(citeturn3file0)_
+
+---
+
+## 3. Questions and Answers: Key Discussions from the Video
+
+The video includes an interactive Q&A segment covering multiple topics related to building effective agents with MCP. Here is a summary of the key questions and their answers:
+
+### Q1. What are the protocol capabilities that relate directly to agent systems?
+
+- **Answer:**  
+  In addition to the core client–server interactions, MCP introduces capabilities such as **sampling** (to request LLM completions from the client), **composability** (enabling logical chaining of services), and tool annotations. These features allow servers to control model inference parameters while still letting the client enforce privacy, cost, and performance limits.
+
+### Q2. How does sampling work in MCP for effective agent design?
+
+- **Answer:**  
+  Sampling lets the server send a system prompt and a task prompt (with various parameters) to the client for LLM inference. The client, which hosts the LLM, processes the request while retaining control over execution (for example, rejecting malicious or cost-prohibitive calls). This mechanism offloads the LLM interaction from the server to the client, enabling a more flexible, federated approach.
+
+### Q3. Why is composability important in building agents?
+
+- **Answer:**  
+  Composability allows any application to function as both an MCP client and server. This duality enables agents to chain multiple services together, creating complex workflows where data flows through several specialized nodes. This design is essential for building layered architectures where each node focuses on a specific task while the entire system remains flexible and extendable.
+
+### Q4. How do you manage control over tool calls and rate limits?
+
+- **Answer:**  
+  The application layer, which sits above the LLM, governs control flow and rate limits. While an MCP server can request specific inference parameters, the client enforces these settings and can limit the number of calls (for example, using tool annotations to indicate read/write behavior). This separation ensures that while the server can direct interactions, the client maintains overall control.
+
+### Q5. How do you address compounding errors in multi-layered agent systems?
+
+- **Answer:**  
+  As in any complex hierarchical system, each layer is responsible for aggregating, verifying, and formatting the data it receives before passing it along. The protocol itself does not eliminate compounding errors, but good design practices—such as having intermediary nodes inspect and normalize data—help to manage error propagation.
+
+### Q6. Why must services be built as MCP servers rather than standard HTTP APIs?
+
+- **Answer:**  
+  Building services as MCP servers rather than plain HTTP APIs allows them to function as autonomous, intelligent agents. This means they can request additional data, trigger LLM inference, and engage in more complex interactions than a typical API. The additional protocol capabilities (like resource notifications and sampling) support richer, more dynamic interactions with downstream agents.
+
+### Q7. How are observability and debugging handled in MCP?
+
+- **Answer:**  
+  Although the protocol does not enforce a specific method for observability, best practices encourage MCP server builders to expose metadata and debugging information. Tools like an "inspector" are suggested to allow developers to review logs and monitor interactions between the client and server, ensuring that the system remains transparent and debuggable.
+
+### Q8. What about governance and security in agent interactions?
+
+- **Answer:**  
+  Governance and security are primarily the responsibility of the server builder. MCP includes default approaches for authentication and authorization, ensuring that only legitimate requests are processed. The server controls what information is exposed to clients, thereby enforcing policies for access and usage.
+
+_(citeturn3file0)_
+
+---
+
+## 4. Glossary: Key Terms and Concepts
+
+- **MCP (Model Context Protocol):**  
+  A standardized protocol that facilitates the integration of external context—via tools, resources, and prompts—into AI systems, particularly in the design of intelligent agents.
+
+- **Agent:**  
+  An augmented language model operating in a loop to perform tasks. Agents can dynamically discover and invoke external services through MCP and adjust their behavior based on received context.
+
+- **Sampling:**  
+  A capability that allows MCP servers to request LLM inference (completions) from the client. It enables the server to specify parameters such as model version, temperature, and maximum tokens while leaving execution control to the client.
+
+- **Composability:**  
+  The architectural principle that allows a single system to act as both an MCP client and server. It supports chaining of interactions and the creation of layered agent systems.
+
+- **Tool Annotations:**  
+  Metadata attached to tool calls (e.g., indicating whether a tool is read-only or write-capable) that helps clients manage how they execute requests.
+
+- **Federation:**  
+  The process by which multiple MCP servers and clients interconnect, allowing agents to access a wide range of services and data sources through a unified protocol.
+
+- **Rate Limiting and Control Flow:**  
+  Mechanisms at the application layer that govern how many requests are sent and how responses are aggregated. These controls ensure that the system operates efficiently without overloading any component.
+
+- **Observability:**  
+  The capability to monitor and debug interactions between MCP clients and servers. While not enforced by the protocol, best practices recommend that MCP implementations expose sufficient metadata for effective troubleshooting.
+
+- **Governance:**  
+  The methods and policies that determine which clients can access what data or services. MCP includes default authorization and authentication approaches to secure interactions.
+
+---
+
+# What's Next for MCP: Roadmap & Future Directions
+
+## 1. Introduction
+
+The Model Context Protocol (MCP) is rapidly evolving. In this video segment, the presenter outlines upcoming enhancements and directions for MCP. Future developments are expected to further lower integration friction, extend capabilities for remote server interactions, and enhance discoverability through registries and versioning systems. These advancements are intended to support a broader ecosystem of agents and applications built with MCP.
+
+---
+
+## 2. Future Enhancements and Roadmap
+
+### 2.1. Remote Servers and Off-Protocol Features
+
+- **Remote Server Integration:**  
+  The presenter explains that one of the major upcoming improvements is the support for remote servers. This means that MCP will soon allow servers to be hosted remotely (for example, on public URLs) and interact securely via protocols such as SSE (Server-Sent Events). This eliminates the need to rely solely on local or standard I/O for communication.
+- **Authentication Flow Enhancements:**  
+  A new handshake process using OAuth 2.0 (OAF 2.0) has been integrated. In practice, when connecting to a remote MCP server (for instance, for Slack integration), the server now orchestrates a complete authentication flow. It handles token management and session creation transparently, letting the client receive a session token to use for future interactions.
+- **Protocol Agnosticism:**  
+  MCP is designed to be transport agnostic, meaning that while the current pattern favors local/in-memory communication over standard I/O for immediate interactions, remote communication (via SSE or similar transports) will soon be fully supported. This flexibility will make it easier for developers to integrate MCP services across different deployment environments.
+
+### 2.2. Registry and Discoverability
+
+- **Centralized Registry API:**  
+  A recurring challenge mentioned in the video is discoverability. With the rapid growth of community-built and partner MCP servers, there is a need for a centralized registry that provides a unified, hosted metadata service.
+  - This registry will enable developers to publish their MCP servers with standardized schemas.
+  - It will help users and agents find, verify, and connect to trusted servers, reducing fragmentation in the ecosystem.
+- **Versioning and Ecosystem Management:**  
+  The roadmap includes better mechanisms for versioning. Future MCP systems will log changes—such as modifications to tool descriptions or the addition of new APIs—so that developers can pin and test against specific versions. This is crucial for maintaining compatibility and ensuring a smooth upgrade path as the ecosystem evolves.
+
+### 2.3. Proactive Server-Initiated Actions
+
+- **Server-Initiated Notifications:**  
+  The protocol will support server-initiated notifications. For example, if a resource (like a file or log list) is updated, the server can immediately notify the client so that the client can refresh its context.
+- **Advanced Sampling and Proactive Inference Requests:**  
+  While current sampling allows servers to request LLM completions from the client, future enhancements aim to let servers initiate interactions proactively. This means that even without an explicit request from the client, the server can reach out with prompts or notifications to keep the interaction flow dynamic and contextually updated.
+
+### 2.4. Governance, Security, and Permissions
+
+- **Enhanced Control over Server–Client Interactions:**  
+  Upcoming improvements will also focus on how servers manage access control and permissions. For instance, a server may enforce policies on what tools an agent can call and may offer different permission levels (from basic to advanced) as needed.
+- **Trust and Verification via Registries:**  
+  With the centralized registry, there will be more robust mechanisms for verifying MCP servers. This ensures that only approved or trusted servers are accessible, which is critical for both security and governance.
+
+---
+
+## 3. Q&A: Key Discussions and Answers
+
+The video includes an extensive Q&A session. Below is a summary of the key questions along with the presenter’s answers:
+
+### Q1. What upcoming remote server capabilities should we expect?
+
+- **Answer:**  
+  The protocol is introducing support for remote servers using protocols like SSE to enable secure, remote interactions. Additionally, the enhanced authentication flow with OAuth 2.0 will allow seamless integration with external platforms (e.g., Slack), letting servers manage tokens and session data efficiently.
+
+### Q2. How will the registry improve discoverability and versioning?
+
+- **Answer:**  
+  A centralized MCP registry API is being developed. This service will host metadata about MCP servers, making it easier for users and agents to discover, verify, and connect to them. It will also log changes and support versioning, helping maintain compatibility as servers evolve.
+
+### Q3. Will servers be able to initiate interactions proactively?
+
+- **Answer:**  
+  Yes. Future iterations of MCP will allow server-initiated actions. This means servers can send notifications or even initiate sampling requests without waiting for a client prompt, making interactions more dynamic and responsive.
+
+### Q4. How does MCP plan to handle permissions and control flow?
+
+- **Answer:**  
+  The server builder will have enhanced control over permissions and access, ensuring that only trusted servers can interact with clients. Mechanisms for elevating permissions and defining control boundaries (such as rate limiting and action annotations) are also being incorporated into the protocol.
+
+### Q5. How will composability and server-to-server interactions evolve?
+
+- **Answer:**  
+  MCP’s design inherently supports composability by allowing an application to function as both an MCP client and server. Future improvements will further simplify chaining interactions between multiple servers and agents, thus enabling complex, hierarchical systems where capabilities are discovered and invoked on demand.
+
+### Q6. What are the plans for handling observability and debugging in MCP?
+
+- **Answer:**  
+  Although the protocol itself does not enforce a specific observability standard, best practices are emerging. Developers are encouraged to build MCP servers with robust logging, metadata, and debugging tools (such as an “inspector” tool) to ensure that interactions can be monitored and troubleshot effectively.
+
+### Q7. How will the protocol ensure secure and trusted interactions?
+
+- **Answer:**  
+  Security will be strengthened through default authentication and authorization measures built into MCP. Furthermore, the centralized registry will play a key role in verifying and approving MCP servers, ensuring that clients only interact with trusted and verified endpoints.
+
+### Q8. What about integration with existing RESTful APIs?
+
+- **Answer:**  
+  While MCP provides a richer set of capabilities compared to traditional RESTful APIs—such as context-rich tool calls and proactive server actions—it is designed to complement existing systems. For stateless interactions, REST will continue to be used; however, for context-aware, dynamic interactions, MCP offers additional layers of intelligence.
+
+---
+
+## 4. Glossary: Key Terms and Concepts
+
+- **MCP (Model Context Protocol):**  
+  An open, standardized protocol designed to supply AI systems with dynamic context through a unified set of interfaces, enabling richer interactions and more effective agent architectures.
+
+- **Agent:**  
+  An augmented language model that operates in a loop, using MCP to interact with external tools and data sources. Agents can dynamically discover and integrate new capabilities to perform tasks.
+
+- **Sampling:**  
+  A mechanism by which an MCP server can request completions (inference calls) from the client’s LLM. This allows the server to dictate model parameters (such as model size, temperature, etc.) while the client controls execution.
+
+- **Remote Servers:**  
+  MCP will soon support servers hosted on remote URLs (using transports like SSE) rather than relying solely on local or in-memory communication. This opens up broader deployment scenarios.
+
+- **Registry:**  
+  A centralized service that will host metadata for MCP servers, improving discoverability, versioning, and trust verification across the ecosystem.
+
+- **Composability:**  
+  The design principle that allows applications to act simultaneously as MCP clients and servers, enabling complex chains of interactions and the creation of layered, modular agent systems.
+
+- **Tool Annotations:**  
+  Metadata attached to tool calls (for example, indicating whether a tool is read-only or write-capable) that helps clients enforce policies and control behavior.
+
+- **Rate Limiting and Control Flow:**  
+  Mechanisms provided at the application layer that manage the number of interactions and ensure that client and server communications remain efficient and secure.
+
+- **Observability:**  
+  The ability to monitor, debug, and log interactions within an MCP system. While the protocol does not enforce observability, best practices recommend robust logging and debugging tools to ensure smooth operation.
+
+- **OAuth 2.0 (OAF 2.0):**  
+  A protocol used for authentication and authorization. In the context of MCP, it is being used to facilitate secure server-to-client handshakes for remote server integrations.
 
 ---
